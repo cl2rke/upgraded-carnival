@@ -1,0 +1,559 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NeuroCAPTCHA — Visual Design System
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --nc-bg: #0a0a0f;
+  --nc-surface: #12121a;
+  --nc-surface-2: #1a1a2e;
+  --nc-border: rgba(255, 255, 255, 0.06);
+  --nc-border-hover: rgba(255, 255, 255, 0.12);
+  --nc-text: #e8e8f0;
+  --nc-text-dim: #8888a0;
+  --nc-accent: #6c5ce7;
+  --nc-accent-glow: rgba(108, 92, 231, 0.3);
+  --nc-success: #00d68f;
+  --nc-success-glow: rgba(0, 214, 143, 0.3);
+  --nc-fail: #ff6b6b;
+  --nc-fail-glow: rgba(255, 107, 107, 0.3);
+  --nc-radius: 12px;
+  --nc-radius-sm: 8px;
+  --nc-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--nc-bg);
+  color: var(--nc-text);
+  font-family: var(--nc-font);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+/* ── Background ambient ─────────────────────────────────────────────────── */
+
+body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 214, 143, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(255, 107, 107, 0.04) 0%, transparent 50%);
+  animation: ambientDrift 20s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes ambientDrift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-2%, 1%) rotate(3deg); }
+}
+
+/* ── Page Layout ────────────────────────────────────────────────────────── */
+
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe, #00d68f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.page-header .subtitle {
+  font-size: 0.9rem;
+  color: var(--nc-text-dim);
+  margin: 0;
+  font-weight: 400;
+}
+
+.page-header .version-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 12px;
+  background: var(--nc-surface-2);
+  border: 1px solid var(--nc-border);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--nc-text-dim);
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAPTCHA Widget
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.nc-container {
+  width: 100%;
+}
+
+.nc-widget {
+  position: relative;
+  width: 100%;
+  border-radius: var(--nc-radius);
+  overflow: visible;
+}
+
+/* ── Trigger / Checkbox ─────────────────────────────────────────────────── */
+
+.nc-trigger {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nc-trigger:hover {
+  border-color: var(--nc-border-hover);
+  background: var(--nc-surface-2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.nc-trigger:active {
+  transform: scale(0.995);
+}
+
+.nc-checkbox-wrap {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.nc-checkbox {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.nc-check-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--nc-success);
+  opacity: 0;
+  transform: scale(0) rotate(-30deg);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nc-checkbox.nc-checked {
+  border-color: var(--nc-success);
+  background: rgba(0, 214, 143, 0.1);
+}
+
+.nc-checkbox.nc-checked .nc-check-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.nc-checkbox.nc-checked .nc-spinner {
+  opacity: 0;
+}
+
+/* ── Spinner ────────────────────────────────────────────────────────────── */
+
+.nc-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top-color: var(--nc-accent);
+  border-right-color: var(--nc-accent);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s;
+  animation: ncSpin 0.8s linear infinite;
+}
+
+.nc-checkbox.nc-spinning .nc-spinner {
+  opacity: 1;
+}
+
+.nc-checkbox.nc-spinning {
+  border-color: transparent;
+}
+
+@keyframes ncSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Label & Brand ──────────────────────────────────────────────────────── */
+
+.nc-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--nc-text);
+  transition: color 0.3s;
+  flex: 1;
+}
+
+.nc-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.4;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: opacity 0.3s;
+}
+
+.nc-trigger:hover .nc-brand {
+  opacity: 0.6;
+}
+
+.nc-shield {
+  width: 18px;
+  height: 18px;
+  color: var(--nc-accent);
+}
+
+/* ── Success / Fail states ──────────────────────────────────────────────── */
+
+.nc-widget.nc-success .nc-trigger {
+  border-color: rgba(0, 214, 143, 0.3);
+  box-shadow: 0 0 20px var(--nc-success-glow), inset 0 0 20px rgba(0, 214, 143, 0.03);
+}
+
+.nc-widget.nc-success .nc-label {
+  color: var(--nc-success);
+}
+
+.nc-widget.nc-success .nc-brand {
+  opacity: 0.6;
+}
+
+.nc-widget.nc-success .nc-shield {
+  color: var(--nc-success);
+}
+
+.nc-widget.nc-fail .nc-trigger {
+  border-color: rgba(255, 107, 107, 0.3);
+  box-shadow: 0 0 20px var(--nc-fail-glow);
+}
+
+.nc-widget.nc-fail .nc-label {
+  color: var(--nc-fail);
+}
+
+/* ── Challenge Panel ────────────────────────────────────────────────────── */
+
+.nc-challenge-panel {
+  margin-top: 12px;
+  padding: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  background: var(--nc-surface);
+  border-radius: var(--nc-radius);
+  border: 1px solid var(--nc-border);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-8px);
+}
+
+.nc-challenge-panel.nc-visible {
+  max-height: 400px;
+  opacity: 1;
+  padding: 16px;
+  transform: translateY(0);
+}
+
+.nc-challenge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nc-challenge-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--nc-text-dim);
+}
+
+.nc-refresh-btn {
+  background: none;
+  border: 1px solid var(--nc-border);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--nc-text-dim);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nc-refresh-btn:hover {
+  border-color: var(--nc-border-hover);
+  color: var(--nc-text);
+  background: var(--nc-surface-2);
+}
+
+/* ── Canvas ─────────────────────────────────────────────────────────────── */
+
+.nc-canvas-wrap {
+  border-radius: var(--nc-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--nc-border);
+  background: #000;
+  position: relative;
+}
+
+.nc-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: grab;
+}
+
+.nc-canvas:active {
+  cursor: grabbing;
+}
+
+/* ── Progress Bar ───────────────────────────────────────────────────────── */
+
+.nc-progress-bar {
+  height: 3px;
+  background: var(--nc-surface-2);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.nc-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--nc-accent), #a29bfe);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nc-widget.nc-success .nc-progress-fill {
+  background: linear-gradient(90deg, var(--nc-success), #00e6a0);
+}
+
+/* ── Status Row ─────────────────────────────────────────────────────────── */
+
+.nc-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+.nc-status-text {
+  font-size: 0.75rem;
+  color: var(--nc-text-dim);
+}
+
+.nc-pow-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--nc-text-dim);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nc-pow-indicator.nc-visible {
+  opacity: 1;
+}
+
+.nc-pow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nc-accent);
+  animation: ncPulse 1s ease-in-out infinite;
+}
+
+@keyframes ncPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Demo Result / Token Display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.demo-result {
+  margin-top: 32px;
+  padding: 20px;
+  background: var(--nc-surface);
+  border: 1px solid rgba(0, 214, 143, 0.2);
+  border-radius: var(--nc-radius);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.demo-result.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.demo-result h3 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--nc-success);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-result h3::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--nc-success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--nc-success-glow);
+}
+
+.demo-token {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  color: var(--nc-text-dim);
+  word-break: break-all;
+  line-height: 1.6;
+  padding: 12px;
+  background: var(--nc-bg);
+  border-radius: var(--nc-radius-sm);
+  border: 1px solid var(--nc-border);
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Info Cards
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.info-section {
+  margin-top: 48px;
+}
+
+.info-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 16px;
+  color: var(--nc-text);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-card {
+  padding: 16px;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-sm);
+  transition: all 0.3s;
+}
+
+.info-card:hover {
+  border-color: var(--nc-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.info-card .icon {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.info-card h4 {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--nc-text);
+}
+
+.info-card p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--nc-text-dim);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .page-wrapper {
+    padding: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nc-trigger {
+    padding: 14px 16px;
+  }
+
+  .nc-brand span {
+    display: none;
+  }
+}
