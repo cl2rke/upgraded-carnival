@@ -312,6 +312,27 @@ body::before {
   margin-bottom: 12px;
 }
 
+.nc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nc-challenge-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.nc-badge-puzzle { background: rgba(108,92,231,0.15); color: #a29bfe; }
+.nc-badge-semantic { background: rgba(0,214,143,0.15); color: #00d68f; }
+.nc-badge-rhythm { background: rgba(255,193,7,0.15); color: #ffc107; }
+.nc-badge-path { background: rgba(233,30,99,0.15); color: #e91e63; }
+.nc-badge-shadow { background: rgba(33,150,243,0.15); color: #42a5f5; }
+
 .nc-challenge-title {
   font-size: 0.8rem;
   font-weight: 500;

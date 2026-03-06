@@ -171,24 +171,77 @@ def _analyze_timing(timing: dict) -> dict:
     return {"pass": score >= 0.5, "score": round(score, 3)}
 
 
-def _analyze_puzzle(puzzle_data: dict, seed: int) -> dict:
+def _analyze_puzzle(puzzle_data: dict, seed: int, challenge_type: str = "puzzle") -> dict:
     accuracy = puzzle_data.get("accuracy", 0)
     path_efficiency = puzzle_data.get("path_efficiency", 0)
     overshoot_count = puzzle_data.get("overshoot_count", 0)
 
     score = 0.0
 
+    if challenge_type == "semantic":
+        wrong_clicks = puzzle_data.get("wrong_clicks", 0)
+        if accuracy >= 1.0:
+            score += 0.5
+        if wrong_clicks <= 2:
+            score += 0.3
+        if puzzle_data.get("click_count", 0) >= 1:
+            score += 0.2
+        return {"pass": score >= 0.5, "score": round(score, 3)}
+
+    if challenge_type == "rhythm":
+        avg_error = puzzle_data.get("avg_error_ms", 9999)
+        suspiciously_perfect = puzzle_data.get("suspiciously_perfect", False)
+        if suspiciously_perfect:
+            return {"pass": False, "score": 0.1, "reason": "suspiciously_perfect"}
+        if accuracy >= 0.6:
+            score += 0.4
+        elif accuracy >= 0.3:
+            score += 0.2
+        if 30 < avg_error < 400:
+            score += 0.35
+        if 1 <= overshoot_count <= 5:
+            score += 0.25
+        return {"pass": score >= 0.4, "score": round(score, 3)}
+
+    if challenge_type == "path":
+        trace_points = puzzle_data.get("trace_points", 0)
+        if accuracy >= 0.7:
+            score += 0.35
+        elif accuracy >= 0.4:
+            score += 0.15
+        if 0.3 <= path_efficiency <= 0.95:
+            score += 0.3
+        if trace_points >= 30:
+            score += 0.15
+        if 1 <= overshoot_count <= 30:
+            score += 0.2
+        return {"pass": score >= 0.4, "score": round(score, 3)}
+
+    if challenge_type == "shadow":
+        rotation_samples = puzzle_data.get("rotation_samples", 0)
+        if accuracy >= 0.8:
+            score += 0.4
+        elif accuracy >= 0.5:
+            score += 0.2
+        if rotation_samples >= 10:
+            score += 0.2
+        if 2 <= overshoot_count <= 20:
+            score += 0.2
+        if 0.05 <= path_efficiency <= 0.9:
+            score += 0.2
+        return {"pass": score >= 0.4, "score": round(score, 3)}
+
+    # Default: drag puzzle
     if accuracy >= 0.85:
         score += 0.4
     elif accuracy >= 0.7:
         score += 0.2
-
     if 0.3 <= path_efficiency <= 0.95:
         score += 0.3
     if 1 <= overshoot_count <= 5:
         score += 0.3
     elif overshoot_count == 0:
-        score += 0.0  # perfect path = suspicious
+        score += 0.0
 
     return {"pass": score >= 0.5, "score": round(score, 3)}
 
@@ -236,9 +289,11 @@ def verify():
     if not _verify_pow(cid, nonce_prefix, pow_nonce, POW_DIFFICULTY):
         return jsonify({"verified": False, "error": "pow_failed"}), 403
 
+    challenge_type = data.get("challenge_type", "puzzle")
+
     mouse_result = _analyze_mouse(data.get("mouse_events", []))
     timing_result = _analyze_timing(data.get("timing", {}))
-    puzzle_result = _analyze_puzzle(data.get("puzzle", {}), seed)
+    puzzle_result = _analyze_puzzle(data.get("puzzle", {}), seed, challenge_type)
 
     weights = {"mouse": 0.4, "timing": 0.3, "puzzle": 0.3}
     final_score = (

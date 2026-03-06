@@ -1,18 +1,53 @@
 /**
  * NeuroCAPTCHA Main Controller
- * Orchestrates the full verification pipeline: challenge request, behavioral
- * collection, puzzle interaction, proof-of-work, and server verification.
+ * Orchestrates the full verification pipeline with multiple challenge types.
+ * Each verification randomly selects 1 of 5 challenge types, making it
+ * impossible for bots to specialize on a single attack vector.
  */
+
+const CHALLENGE_TYPES = [
+  {
+    id: "puzzle",
+    title: "Drag the puzzle piece to its position",
+    hint: "Drag the piece to complete the image",
+    factory: (canvas, seed) => new PuzzleEngine(canvas, seed),
+  },
+  {
+    id: "semantic",
+    title: "Click the item that doesn't belong",
+    hint: "Find the odd one out in the grid",
+    factory: (canvas, seed) => new SemanticGrid(canvas, seed),
+  },
+  {
+    id: "rhythm",
+    title: "Repeat the rhythm pattern",
+    hint: "Watch, then tap the same beat",
+    factory: (canvas, seed) => new RhythmTap(canvas, seed),
+  },
+  {
+    id: "path",
+    title: "Trace the path from start to end",
+    hint: "Click START, then follow the path",
+    factory: (canvas, seed) => new PathTrace(canvas, seed),
+  },
+  {
+    id: "shadow",
+    title: "Rotate the shape to match the target",
+    hint: "Drag left/right on the shape",
+    factory: (canvas, seed) => new ShadowRotate(canvas, seed),
+  },
+];
 
 class NeuroCaptcha {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
     if (!this.container) throw new Error(`Container #${containerId} not found`);
 
-    this.state = "idle"; // idle | loading | active | solving_pow | verifying | success | fail
+    this.state = "idle";
     this.challenge = null;
     this.behavior = new BehaviorCollector();
     this.puzzle = null;
+    this.currentChallengeType = null;
     this.onVerified = null;
     this._retryCount = 0;
 
@@ -52,13 +87,16 @@ class NeuroCaptcha {
     this.challengePanel.className = "nc-challenge-panel";
     this.challengePanel.innerHTML = `
       <div class="nc-challenge-header">
-        <span class="nc-challenge-title">Drag the puzzle piece to its position</span>
-        <button class="nc-refresh-btn" title="New challenge">
-          <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-            <path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <span class="nc-challenge-title">Solve the challenge</span>
+        <div class="nc-header-right">
+          <span class="nc-challenge-badge"></span>
+          <button class="nc-refresh-btn" title="New challenge">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="nc-canvas-wrap">
         <canvas class="nc-canvas" width="360" height="220"></canvas>
@@ -101,17 +139,42 @@ class NeuroCaptcha {
       const resp = await fetch("/api/challenge", { method: "POST" });
       this.challenge = await resp.json();
 
+      // Use seed to deterministically pick challenge type
+      const typeIndex = this.challenge.puzzle_seed % CHALLENGE_TYPES.length;
+      this.currentChallengeType = CHALLENGE_TYPES[typeIndex];
+
       this._setState("active");
-      this._initPuzzle();
+      this._initChallenge();
     } catch (err) {
       console.error("Challenge fetch failed:", err);
       this._setState("fail");
     }
   }
 
-  _initPuzzle() {
+  _initChallenge() {
     const canvas = this.challengePanel.querySelector(".nc-canvas");
-    this.puzzle = new PuzzleEngine(canvas, this.challenge.puzzle_seed);
+    const title = this.challengePanel.querySelector(".nc-challenge-title");
+    const badge = this.challengePanel.querySelector(".nc-challenge-badge");
+    const statusText = this.challengePanel.querySelector(".nc-status-text");
+
+    title.textContent = this.currentChallengeType.title;
+    statusText.textContent = this.currentChallengeType.hint;
+
+    const badgeLabels = {
+      puzzle: "SPATIAL",
+      semantic: "LOGIC",
+      rhythm: "TEMPORAL",
+      path: "MOTOR",
+      shadow: "ROTATION",
+    };
+    badge.textContent = badgeLabels[this.currentChallengeType.id] || "";
+    badge.className = "nc-challenge-badge nc-badge-" + this.currentChallengeType.id;
+
+    // Reset canvas
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    this.puzzle = this.currentChallengeType.factory(canvas, this.challenge.puzzle_seed);
     this.puzzle.onSolved = (result) => this._onPuzzleSolved(result);
   }
 
@@ -137,6 +200,7 @@ class NeuroCaptcha {
       mouse_events: report.mouse_events,
       timing: report.timing,
       puzzle: puzzleResult,
+      challenge_type: this.currentChallengeType.id,
     };
 
     try {
@@ -155,8 +219,8 @@ class NeuroCaptcha {
         this._retryCount++;
         if (this._retryCount >= 3) {
           this._setState("fail");
-          const statusText = this.challengePanel.querySelector(".nc-status-text");
-          statusText.textContent = "Verification failed. Please try again.";
+          const st = this.challengePanel.querySelector(".nc-status-text");
+          st.textContent = "Verification failed. Please try again.";
         } else {
           this._setState("fail");
           setTimeout(() => this._startChallenge(), 800);
@@ -194,8 +258,7 @@ class NeuroCaptcha {
       case "active":
         widget.classList.add("nc-active");
         checkbox.classList.remove("nc-spinning");
-        label.textContent = "Solve the puzzle";
-        statusText.textContent = "Drag the piece to complete the image";
+        label.textContent = "Solve the challenge";
         progressFill.style.width = "30%";
         break;
 
