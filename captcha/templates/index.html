@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroCAPTCHA — AI-Resistant Verification</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2'><path d='M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z'/></svg>">
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <header class="page-header">
+      <h1>NeuroCAPTCHA</h1>
+      <p class="subtitle">Multi-layered human verification resistant to neural networks</p>
+      <span class="version-badge">v2.0.0 &middot; 5 CHALLENGE TYPES &middot; 10 DEFENSE LAYERS</span>
+    </header>
+
+    <div id="neurocaptcha"></div>
+
+    <div id="demo-result" class="demo-result">
+      <h3>Verification Successful</h3>
+      <p style="margin: 0 0 8px; font-size: 0.78rem; color: var(--nc-text-dim);">
+        Your unique verification token:
+      </p>
+      <div class="demo-token"></div>
+    </div>
+
+    <section class="info-section">
+      <h2>Challenge Types</h2>
+      <div class="info-grid">
+        <div class="info-card">
+          <span class="icon">🧩</span>
+          <h4>Drag Puzzle</h4>
+          <p>Physics-based drag with overshoot detection. Perfect robotic paths are flagged.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">🔍</span>
+          <h4>Semantic Anomaly</h4>
+          <p>Find the icon that doesn't belong. Requires common-sense categorization AI can't fake.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">🥁</span>
+          <h4>Rhythm Tap</h4>
+          <p>Watch a beat pattern, repeat it. Temporal precision is analyzed — too perfect = bot.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">✏️</span>
+          <h4>Path Trace</h4>
+          <p>Trace a winding path with your cursor. Fine motor control generates rich behavioral data.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">🔄</span>
+          <h4>Shadow Rotation</h4>
+          <p>Rotate a shape to match a silhouette. Tests spatial reasoning with continuous interaction.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">🎲</span>
+          <h4>Random Selection</h4>
+          <p>Challenge type is randomly chosen per session. Bots can't specialize on one attack vector.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h2>Defense Layers</h2>
+      <div class="info-grid">
+        <div class="info-card">
+          <span class="icon">🧠</span>
+          <h4>Behavioral Biometrics</h4>
+          <p>Mouse trajectory entropy, speed variance, acceleration jerk — the unique signature of human motor control.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">⛏️</span>
+          <h4>Proof of Work</h4>
+          <p>SHA-256 mining forces real CPU cost per attempt, making large-scale bot attacks economically infeasible.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">⏱️</span>
+          <h4>Timing Analysis</h4>
+          <p>Solve time, click-hold duration, focus events — temporal fingerprints that bots can't replicate.</p>
+        </div>
+        <div class="info-card">
+          <span class="icon">🔐</span>
+          <h4>HMAC Signatures</h4>
+          <p>Every challenge is cryptographically signed and time-limited. Replay and forgery are impossible.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="/static/js/behavior.js"></script>
+  <script src="/static/js/pow.js"></script>
+  <script src="/static/js/puzzle.js"></script>
+  <script src="/static/js/challenges.js"></script>
+  <script src="/static/js/captcha.js"></script>
+</body>
+</html>
